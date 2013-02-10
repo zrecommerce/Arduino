@@ -42,9 +42,9 @@ import static processing.app.I18n._;
  * files and images, etc) that comes from that.
  */
 public class Base {
-  public static final int REVISION = 101;
+  public static final int REVISION = 103;
   /** This might be replaced by main() if there's a lib/version.txt file. */
-  static String VERSION_NAME = "0101";
+  static String VERSION_NAME = "0103";
   /** Set true if this a proper release rather than a numbered revision. */
   static public boolean RELEASE = false;
 
@@ -107,6 +107,11 @@ public class Base {
 
 
   static public void main(String args[]) {
+    initPlatform();
+
+    // run static initialization that grabs all the prefs
+    Preferences.init(null);
+
     try {
       File versionFile = getContentFile("lib/version.txt");
       if (versionFile.exists()) {
@@ -145,8 +150,6 @@ public class Base {
     }
     */
 
-    initPlatform();
-
 //    // Set the look and feel before opening the window
 //    try {
 //      platform.setLookAndFeel();
@@ -165,12 +168,6 @@ public class Base {
 
     // Make sure a full JDK is installed
     //initRequirements();
-
-    // run static initialization that grabs all the prefs
-    Preferences.init(null);
-
-    // load the I18n module for internationalization
-    I18n.init(Preferences.get("editor.languages.current"));
 
     // setup the theme coloring fun
     Theme.init();
@@ -1182,8 +1179,13 @@ public class Base {
     Arrays.sort(list, String.CASE_INSENSITIVE_ORDER);
 
     ActionListener listener = new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          activeEditor.getSketch().importLibrary(e.getActionCommand());
+        public void actionPerformed(ActionEvent event) {
+          String jarPath = event.getActionCommand();
+          try {
+            activeEditor.getSketch().importLibrary(jarPath);
+          } catch (IOException e) {
+            showWarning(_("Error"), I18n.format("Unable to list header files in {0}", jarPath), e);
+          }
         }
       };
 
@@ -1220,11 +1222,15 @@ public class Base {
 //        String packages[] =
 //          Compiler.packageListFromClassPath(libraryClassPath);
         libraries.add(subfolder);
+      try {
         String packages[] =
           Compiler.headerListFromIncludePath(subfolder.getAbsolutePath());
         for (String pkg : packages) {
           importToLibraryTable.put(pkg, subfolder);
         }
+      } catch (IOException e) {
+        showWarning(_("Error"), I18n.format("Unable to list header files in {0}", subfolder), e);
+      }
 
         JMenuItem item = new JMenuItem(libraryName);
         item.addActionListener(listener);
@@ -1574,71 +1580,8 @@ public class Base {
         libdir.mkdirs();
         File readme = new File(libdir, "readme.txt");
         FileWriter freadme = new FileWriter(readme);
-        freadme.write(_(
-"Installing Additional Arduino Libraries\n" +
-"----------------------------------------\n" +
-"Once you are comfortable with the Arduino software and using the\n" +
-"built-in functions, you may want to extend the ability of your Arduino\n" +
-"with additional libraries.\n" +
-"\n" +
-"What are Libraries?\n" +
-"----------------------------------------\n" +
-"Libraries are a collection of code that makes it easy for you to connect \n" +
-"to a sensor, display, module, etc. For example, the built-in \n" +
-"LiquidCrystal library makes it easy to talk to character LCD displays. \n" +
-"There are hundreds of additional libraries available on the Internet for \n" +
-"download. The built-in libraries and some of these additional libraries\n" +
-"are listed here: http://arduino.cc/en/Reference/Libraries. To use the\n" +
-"additional libraries, you will need to install them.\n" +
-"\n" +
-"How to Install a Library\n" +
-"----------------------------------------\n" +
-"Libraries are often distributed as a ZIP file or folder. The name of the \n" +
-"folder is the name of the library. Inside the folder will be a .cpp \n" +
-"file, a .h file and often a keywords.txt file, examples folder, and other\n" +
-"files required by the library.\n" +
-"\n" +
-"To install the library, first quit the Arduino application.\n" +
-"\n" +
-"Then uncompress the ZIP file containing the library.  For example, if\n" +
-"you're installing a library called \"ArduinoParty\", uncompress\n" +
-"ArduinoParty.zip.  It should contain a folder called ArduinoParty, with\n" +
-"files like ArduinoParty.cpp and ArduinoParty.h inside.  (If the .cpp and\n" +
-".h files aren't in a folder, you'll need to create one.  In this case,\n" +
-"you'd make a folder called \"ArduinoParty\" and move into it all the files\n" +
-"that were in the ZIP file, like ArduinoParty.cpp and ArduinoParty.h.)  \n" +
-"\n" +
-"Drag the ArduinoParty folder into this folder (your libraries folder).\n" +
-"Under Windows, it will likely be called \"My Documents\\Arduino\\libraries\".\n" +
-"For Mac users, it will likely be called \"Documents/Arduino/libraries\".\n" +
-"On Linux, it will be the \"libraries\" folder in your sketchbook.\n" +
-"\n" +
-"Your Arduino library folder should now look like this (on Windows):\n" +
-"  My Documents\\Arduino\\libraries\\ArduinoParty\\ArduinoParty.cpp\n" +
-"  My Documents\\Arduino\\libraries\\ArduinoParty\\ArduinoParty.h\n" +
-"  My Documents\\Arduino\\libraries\\ArduinoParty\\examples\n" +
-"  ....\n" +
-"or like this (on Mac):\n" +
-"  Documents/Arduino/libraries/ArduinoParty/ArduinoParty.cpp\n" +
-"  Documents/Arduino/libraries/ArduinoParty/ArduinoParty.h\n" +
-"  Documents/Arduino/libraries/ArduinoParty/examples\n" +
-"  ...\n" +
-"or similarly for Linux.\n" +
-"\n" +
-"There may be more files than just the .cpp and .h files, just make sure \n" +
-"they're all there.\n" +
-"\n" +
-"(The library won't work if you put the .cpp and .h files directly into\n" +
-"the libraries folder or if they're nested in an extra folder.  For \n" +
-"example:\n" +
-"  Documents\\Arduino\\libraries\\ArduinoParty.cpp and\n" +
-"  Documents\\Arduino\\libraries\\ArduinoParty\\ArduinoParty\\ArduinoParty.cpp\n" +
-"won't work.)\n" +
-"\n" +
-"Restart the Arduino application. Make sure the new library appears in the \n" +
-"Sketch->Import Library menu item of the software.\n" +
-"\n" +
-"That's it! You've installed a library!\n"));
+        freadme.write(_("For information on installing libraries, see: " +
+                        "http://arduino.cc/en/Guide/Libraries\n"));
         freadme.close();
       } catch (Exception e) {
       }

@@ -15,7 +15,7 @@ uno.bootloader.unlock_bits=0x3F
 uno.bootloader.lock_bits=0x0F
 uno.build.mcu=atmega328p
 uno.build.f_cpu=16000000L
-uno.build.core=arduino
+uno.build.core=gen7
 uno.build.variant=standard
 
 ##############################################################
@@ -120,7 +120,7 @@ mega2560.bootloader.lock_bits=0x0F
 
 mega2560.build.mcu=atmega2560
 mega2560.build.f_cpu=16000000L
-mega2560.build.core=arduino
+mega2560.build.core=gen7
 mega2560.build.variant=mega
 
 ##############################################################
@@ -162,7 +162,7 @@ leonardo.build.mcu=atmega32u4
 leonardo.build.f_cpu=16000000L
 leonardo.build.vid=0x2341
 leonardo.build.pid=0x8036
-leonardo.build.core=arduino
+leonardo.build.core=gen7
 leonardo.build.variant=leonardo
 
 ##############################################################
